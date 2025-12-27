@@ -1,79 +1,39 @@
-const fetch = require('node-fetch');
+const fs = require('fs');
+const path = require('path');
 
 module.exports = {
-  name: "ig",
-  aliases: ["instagram"],
+  name: "menu",
+  aliases: ["help"],
   ownerOnly: false,
   groupOnly: false,
 
-  run: async ({ sock, chatId, msg, args }) => {
-    // تحقق من وجود الرابط
-    if (!args[0]) {
-      return sock.sendMessage(
+  run: async ({ sock, chatId, msg, prefix }) => {
+    const menu =
+`╭─ BOT_AZEDDINE_TECH
+│
+│ ${prefix}ping
+│ ${prefix}info
+│ ${prefix}ig <link>  تحميل إنستغرام
+│ ${prefix}welcome on/off  (مجموعات)
+│ ${prefix}owner  (معلومة)
+│
+╰──────────────`;
+
+    const imagePath = path.join(__dirname, '../../assets/menu.jpg');
+
+    if (fs.existsSync(imagePath)) {
+      await sock.sendMessage(
         chatId,
         {
-          text: "❌ أرسل رابط إنستغرام\nمثال:\n.ig https://www.instagram.com/reel/xxxx"
+          image: fs.readFileSync(imagePath),
+          caption: menu
         },
         { quoted: msg }
       );
-    }
-
-    const url = args[0];
-
-    // تحقق من صحة الرابط
-    if (!url.includes("instagram.com")) {
-      return sock.sendMessage(
-        chatId,
-        { text: "❌ الرابط غير صالح (يجب أن يكون من إنستغرام)" },
-        { quoted: msg }
-      );
-    }
-
-    try {
-      // رسالة انتظار
+    } else {
       await sock.sendMessage(
         chatId,
-        { text: "⏳ جارِ التحميل من إنستغرام..." },
-        { quoted: msg }
-      );
-
-      // API مجاني (قد يتوقف أحيانًا)
-      const api = `https://api.ryzendesu.vip/api/downloader/ig?url=${encodeURIComponent(url)}`;
-      const res = await fetch(api);
-      const data = await res.json();
-
-      if (!data || !data.data || data.data.length === 0) {
-        throw new Error("No media found");
-      }
-
-      // إرسال الصور / الفيديوهات
-      for (const media of data.data) {
-        if (media.type === "video") {
-          await sock.sendMessage(
-            chatId,
-            {
-              video: { url: media.url },
-              caption: "✅ تم التحميل من إنستغرام"
-            },
-            { quoted: msg }
-          );
-        } else {
-          await sock.sendMessage(
-            chatId,
-            {
-              image: { url: media.url },
-              caption: "✅ تم التحميل من إنستغرام"
-            },
-            { quoted: msg }
-          );
-        }
-      }
-
-    } catch (error) {
-      console.error(error);
-      await sock.sendMessage(
-        chatId,
-        { text: "❌ حدث خطأ أثناء التحميل، حاول لاحقًا" },
+        { text: menu },
         { quoted: msg }
       );
     }
